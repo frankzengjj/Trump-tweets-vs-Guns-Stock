@@ -11,7 +11,7 @@ step 3:
 make markowitz portfolio of top gun stocks
 
 step 4:
-shiny app comparing portfolio over time and trump tweets over time
+shiny app comparing portfolio price over time and trump tweets over time
 
 step 5:
 cluster trump's tweets
