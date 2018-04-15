@@ -7,6 +7,7 @@ library(stringi)
 library('quantmod')
 library('xts')
 library('TTR')
+library(lubridate)
 
 consumer_key = "z0f8WnP1dGcAogS2o7GKyp2Ui"
 consumer_secret = "pzeAdwLUkrXZvZx41ex2iSrDqMyXgCI7CIqMDPCyNrucG1wqto"
@@ -19,16 +20,9 @@ user = getUser('realDonaldTrump')
 userTl = userTimeline(user, n=100, includeRts = TRUE)
 trumpTw = userTl %>% twListToDF() %>% as.tibble()
 trumpTwText = trumpTw %>% select(text,created)
-trumpTwText$created = format(trumpTwText$created,usetz=TRUE, tz="EST")
+trumpTwText$created = as.POSIXct(trumpTwText$created, usetz=TRUE, tz="GMT")
+force_tz(trumpTwText$created, "America/New_York")
 
-
-substring(as.character(trumpTwText$created), first = 0, last = nchar(trumpTwText$created) - 4)
-amazon
-
-as.character(trumpTwText$created)
-
-nchar(trumpTwText$created[1])
-str(trumpTwText$created)
 # Get intra-day stock prices from Google Finance.
 # URL format is: https://www.google.com/finance/getprices?i=[PERIOD]
 #   &p=[DAYS]d&f=d,o,h,l,c,v&df=cpct&q=[TICKER]
@@ -51,17 +45,46 @@ stockprices = function(ticker, period, days) {
                                      start.time[i] + period * as.numeric(price[eval(parse(text = idx.range[i])), 1])
                                    })
   )
-  price.dt = xts(price[,-1], as.POSIXct(alltimes.idx, origin = '1970-01-01', tz = 'GMT'))
-  indexTZ(price.dt) = 'America/New_York'
-  colnames(price.dt) = c('Open', 'High', 'Low', 'Close', 'Volume')
-  price.dt
+  price[,1] = as.POSIXct(alltimes.idx, origin = '1970-01-01', tz = 'EST')
+  colnames(price) = c('Date_Time', 'Open', 'High', 'Low', 'Close', 'Volume')
+  price
 }
 
-amazon = stockprices("AMZN", 60, "3d")
+amazon = stockprices("AMZN", 60, "4d")
+lockheed = stockprices("LMT", 60, "4d")
+gm = stockprices("GM", 60, "4d")
+apple = stockprices("AAPL", 60, "4d")
+facebook = stockprices("FB", 60, "4d")
+fox = stockprices("FOXA", 60, "1d")
 
-plot(amazon$Open, type = "l") + abline(v = trumpTwText$created, col="red")
+amazon
+
+
+
+ggplot() + 
+  theme_classic() +
+  geom_vline(xintercept = trumpTwText$created, col = "black") +
+  #geom_line(data = amazon, mapping = aes(x = amazon$Date_Time, y = amazon$Open), col="#ff9900") + 
+  #geom_line(data = lockheed, mapping = aes(x = lockheed$Date_Time, y = lockheed$Open), col="#005bad") +
+  #geom_line(data = gm, mapping = aes(x = gm$Date_Time, y = gm$Open), col="#696969") +
+  #geom_line(data = apple, mapping = aes(x = apple$Date_Time, y = apple$Open), col="orange") +
+  #geom_line(data = facebook, mapping = aes(x = facebook$Date_Time, y = facebook$Open), col="lightblue") +
+  geom_line(data = fox, mapping = aes(x = fox$Date_Time, y = fox$Open), col="red")
 
 #' References
 #' https://www.quantshare.com/sa-426-6-ways-to-download-free-intraday-and-tick-data-for-the-us-stock-market
 #' @frederickpelchat
 #'   https://github.com/frederickpelchat/quantitative-finance/blob/master/intraday-data.R
+
+
+
+amazon
+open = amazon$Open
+n = length(open)
+ret = open[-n]/open[-1] - 1
+vol = sd(ret) * sqrt(4) * 100
+#measured volatility
+
+
+
+
