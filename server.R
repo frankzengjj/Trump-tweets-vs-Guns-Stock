@@ -14,7 +14,6 @@ library(quantmod)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
   
-  
   output$stockPlot <- renderHighchart({
     if (input$stock == "fox") {
       dat = fox
@@ -24,20 +23,26 @@ shinyServer(function(input, output) {
       dat = facebook
     }
     
-    data_flags <- data_frame(
-      date = sample(trumpTw$created, size = 5),
-      title = sprintf("E #%s", seq_along(date)),
-      text = sprintf("An interesting event #%s in %s", seq_along(date), date)
-    )
-    
-    
-    hc <- highchart(type = "stock") %>% 
-      hc_xAxis(type = 'datetime') %>% 
-      hc_title(text = "Charting some Symbols") %>% 
+    hc <- highchart(type = "stock") %>%
+      hc_title(text = "Overall") %>% 
       hc_subtitle(text = "Data extracted using quantmod package") %>% 
       hc_add_series(dat, id = "stock", type = "line")
+    
+  })
+  
+  output$stockvstrump <- renderPlot({
+    if (input$stock.1m == "fox") {
+      dat = fox
+    } else if (input$stock.1m == "amazon") {
+      dat = amazon
+    } else {
+      dat = facebook
+    }
+    
+    ggplot() + 
+      geom_vline(xintercept = trumpTwText$created, col = "black") +
+      geom_line(data = dat, mapping = aes(x = dat$Date_Time, y = fox$Open), col="red") 
       
-   
   })
   
 })
