@@ -18,14 +18,20 @@ shinyUI(fluidPage(
   
   tabsetPanel(
     tabPanel("plot1", fluid = TRUE,
+          
              sidebarLayout(fluidPage(
                selectInput("stock.1m",
                            "Stocks",
                            c("Fox" = "fox",
                              "Amazon" = "amazon",
                              "Facebook"= "facebook"))),
-               plotOutput("stockvstrump")
+               mainPanel(
+                plotOutput("stockvstrump", width = "150%"),
+                highchartOutput("tweetscout", width = "150%"),
+                DT::dataTableOutput("trumpTweets", width = "150%"))
+               
              )
+          
     ),
     tabPanel("plot2", fluid = TRUE,
              sidebarLayout(fluidPage(
@@ -35,10 +41,13 @@ shinyUI(fluidPage(
                              "Amazon" = "amazon",
                              "Facebook"= "facebook"))),
               
-                highchartOutput("stockPlot")
+                mainPanel(fluidPage(
+                  highchartOutput("stockPlot", width = "150%"),
+                  DT::dataTableOutput("tweetSentiment", width = "150%")))
+                
              )
-      
     )
+    
   )
 
   # Sidebar with a slider input for number of bins
