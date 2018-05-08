@@ -1,0 +1,22 @@
+times = as.POSIXct(as.character(round(trumpTwText$created, units="mins")))
+
+t0 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times-360))]
+t1 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% times)]
+t2 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times + 360))]
+
+x = rep(c(-1,1), length(t0))
+id = rep(1:length(t0), each=2)
+t3 = t0
+t4 = t2
+con = c(rbind(t3, t4))
+tim = tibble(x, con, id)
+tim=tim %>%
+  group_by(id) %>% 
+  mutate(slope=(con[x=1] - con[x=-1]))
+
+ggplot(data=tim, aes(x=x, y=con, group=id, color=slope<0)) +
+  geom_point() +
+  geom_line(alpha=0.3) +
+  geom_vline(aes(xintercept=0)) +
+  labs(x = "Time (minutes)", y="Stock Price") + 
+  ggtitle("Stock prices before and after tweet")
