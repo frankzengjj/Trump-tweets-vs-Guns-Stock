@@ -1,10 +1,10 @@
 times = as.POSIXct(as.character(round(trumpTwText$created, units="mins")))
 
-t0 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times-360))]
+t0 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times-600))]
 t1 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% times)]
-t2 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times + 360))]
+t2 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times + 600))]
 
-x = rep(c(-1,1), length(t0))
+x = rep(c(-10,10), length(t0))
 id = rep(1:length(t0), each=2)
 t3 = t0
 t4 = t2
