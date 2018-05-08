@@ -57,7 +57,7 @@ gm = stockprices("GM", 60, "10d")
 apple = stockprices("AAPL", 60, "10d")
 facebook = stockprices("FB", 60, "10d")
 fox = stockprices("FOXA", 60, "10d")
-
+spy = stockprices("SPY", 60, "10d")
 
 
 
@@ -112,24 +112,54 @@ ggplot() +
 
 
 times = as.POSIXct(as.character(round(trumpTwText$created, units="mins")))
+afterhours = c()
+for (i in 1:length(times)) {
+  y=strsplit(as.character(times[i]), " ")
+  z=paste(y[[1]][1], "08:40:00", sep=" ")
+  c=paste(y[[1]][1], "14:50:00", sep=" ")
+  z=as.POSIXct(z)
+  c=as.POSIXct(c)
+  if (times[i] < z) {
+    afterhours = c(afterhours, i)
+  } else if (times[i] > c) {
+    afterhours = c(afterhours, i)
+  }
+}
+times=times[-afterhours]
 
-t0 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times-600))]
-t1 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% times)]
-t2 = fox$Open[which(as.POSIXct(as.character(fox$Date_Time)) %in% (times + 600))]
 
-x = rep(c(-10,10), length(t0))
+# t0 = lockheed$Open[which(as.POSIXct(as.character(lockheed$Date_Time)) %in% (times-600))]
+# t1 = lockheed$Open[which(as.POSIXct(as.character(lockheed$Date_Time)) %in% times)]
+# t2 = lockheed$Open[which(as.POSIXct(as.character(lockheed$Date_Time)) %in% (times+600))]
+
+
+idx = which(as.POSIXct(as.character(spy$Date_Time)) %in% times)
+t1 = spy$Open[idx]
+t0 = spy$Open[idx-10]
+t2 = spy$Open[idx+10]
+
+b = rep(c(-10,0), length(t0))
 id = rep(1:length(t0), each=2)
-t3 = t0
-t4 = t2
-con = c(rbind(t3, t4))
-tim = tibble(x, con, id)
-tim=tim %>%
+before = c(rbind(t0,t1))
+df_b = tibble(b,id,before)
+df_b = df_b %>% 
   group_by(id) %>% 
-  mutate(slope=(con[x=1] - con[x=-1]))
+  mutate(slope=(before[which(b==0)] - before[which(b==-10)]))
 
-ggplot(data=tim, aes(x=x, y=con, group=id, color=slope<0)) +
-  geom_point() +
-  geom_line(alpha=0.3) +
+a = rep(c(0,10), length(t0))
+after = c(rbind(t1,t2))
+df_a = tibble(a,id,after)
+df_a = df_a %>% 
+  group_by(id) %>% 
+  mutate(slope=(after[which(a==10)] - after[which(a==0)]))
+
+ggplot(data=df_b, aes(x=b, y=before, group=id, color=slope>0)) +
+  geom_line() +
   geom_vline(aes(xintercept=0)) +
-  labs(x = "Time (minutes)", y="Stock Price") + 
-  ggtitle("Stock prices before and after tweet")
+  labs(x = "Time (minutes)\nTrump Tweet at t=0", y="Stock Price") + 
+  ggtitle("Stock prices before and after tweet") + 
+  geom_line(data=df_a, aes(x=a, y=after, group=id, color=slope>0))
+
+changes = c(mean((t1-t0)/10), mean((t2-t1)/10)) 
+names(changes) = c("Before Tweet", "After Tweet")
+changes #in average dollars per minute
